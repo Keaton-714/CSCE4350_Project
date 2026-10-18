@@ -1,0 +1,3 @@
+To run you need to pip install -r requirements.txt (need to do only once)
+Then in the terminal write python backend/app.py
+click URL and you'll be in the website
