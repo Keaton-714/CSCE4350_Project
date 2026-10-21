@@ -1,7 +1,17 @@
+# Python
 __pycache__/
 *.pyc
 .venv/
-.env
-*.db
+venv/
+
+# SQLite
 *.sqlite3
+
+# Environment variables
+.env
+
+# Testing
 .pytest_cache/
+
+# VS Code
+.vscode/
