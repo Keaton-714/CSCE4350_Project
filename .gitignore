@@ -15,3 +15,9 @@ venv/
 
 # VS Code
 .vscode/
+
+# macOS metadata
+.DS_Store
+
+# Local SQLite database files
+*.db
