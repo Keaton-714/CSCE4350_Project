@@ -5,5 +5,5 @@ class OrderItem:
         self.quantity = quantity
         self.unit_price = unit_price
 
-    def calculateSubtotal(self):
+    def calculate_subtotal(self):
         return self.quantity * self.unit_price
