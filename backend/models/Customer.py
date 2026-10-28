@@ -1,5 +1,6 @@
 from backend.models.User import User
 
 class Customer(User):
-    def __init__(self, userID, email, passwordHash, firstName, lastName):
-        super().__init__(userID, email, passwordHash, firstName, lastName)
+    def __init__(self, user_id, customer_id, email, password_hash, fname, lname):
+        super().__init__(user_id, email, password_hash, fname, lname)
+        self.customer_id = customer_id

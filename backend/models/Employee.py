@@ -1,6 +1,8 @@
 from backend.models.User import User
 
 class Employee(User):
-    def __init__(self, userID, email, passwordHash, firstName, lastName, salary):
-        super().__init__(userID, email, passwordHash, firstName, lastName)
+    def __init__(self, user_id, employee_id, email, password_hash, fname, lname, store_id, salary):
+        super().__init__(user_id, email, password_hash, fname, lname)
         self.salary = salary
+        self.store_id = store_id
+        self.employee_id = employee_id
