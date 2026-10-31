@@ -28,3 +28,22 @@ def get_part(part_id):
         return part
     finally:
         connection.close()
+
+def add_part(name, description, price, category):
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            INSERT INTO Part (name, description, price, category)
+            VALUES (?, ?, ?, ?)
+            """,
+            (name, description, price, category)
+        )
+
+        connection.commit()
+
+        return cursor.lastrowid
+
+    finally:
+        connection.close()
