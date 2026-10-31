@@ -14,8 +14,6 @@ def get_part(part_id):
             (part_id,)
         ).fetchone()
 
-        print("DEBUG:", dict(row) if row is not None else None)
-
         if row is None:
             return None
 
