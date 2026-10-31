@@ -20,27 +20,27 @@ VALUES (1, '123 Main Street', 'Fort Worth', 'TX', '76102', 8175550001);
 
 -- User Info -- 
 
-INSERT OR IGNORE INTO User (user_id, login, password_hash)
-VALUES (1, 'JohnDoe@yahoo.com', 'demo_hash_customer_001');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
+VALUES (1, 'JohnDoe@yahoo.com', 'demo_hash_customer_001', 'John', 'Doe');
 
-INSERT OR IGNORE INTO User (user_id, login, password_hash)
-VALUES (2, 'JaneDoe@yahoo.com', 'demo_hash_customer_002');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
+VALUES (2, 'JaneDoe@yahoo.com', 'demo_hash_customer_002', 'Jane', 'Doe');
 
-INSERT OR IGNORE INTO User (user_id, login, password_hash)
-VALUES (3, 'manager@test.com', 'demo_hash_employee_003');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
+VALUES (3, 'manager@test.com', 'demo_hash_employee_003', 'Test', 'Manager');
 
 -- Customer Info -- 
 
-INSERT OR IGNORE INTO Customer (customer_id, user_id, fname, lname, phone_number) -- user_id = 1 matches so it connects to User.user_id = 1 information
-VALUES (1, 1, 'John', 'Doe', '8175551000');
+INSERT OR IGNORE INTO Customer (customer_id, user_id, phone_number) -- user_id = 1 matches so it connects to User.user_id = 1 information
+VALUES (1, 1, '8175551000');
 
-INSERT OR IGNORE INTO Customer (customer_id, user_id, fname, lname, phone_number) -- user_id = 2 matches so it connects to User.user_id = 2 information
-VALUES (2, 2, 'Jane', 'Doe', '8175551001');
+INSERT OR IGNORE INTO Customer (customer_id, user_id, phone_number) -- user_id = 2 matches so it connects to User.user_id = 2 information
+VALUES (2, 2, '8175551001');
 
 -- Employee Info -- 
 
-INSERT OR IGNORE INTO Employee ( employee_id, user_id, store_id, role)
-VALUES (1, 3, 1, 'Manager');
+INSERT OR IGNORE INTO Employee (employee_id, user_id, store_id)
+VALUES (1, 3, 1);
 
 -- Store Inventory Info --
 

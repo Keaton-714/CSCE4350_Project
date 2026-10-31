@@ -32,22 +32,21 @@ CREATE TABLE IF NOT EXISTS Store (
 
 CREATE TABLE IF NOT EXISTS User (
     user_id INTEGER PRIMARY KEY,
-    login TEXT UNIQUE NOT NULL,  -- "UNIQUE" = prevents duplicate values in a column
-    password_hash TEXT NOT NULL
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    fname TEXT NOT NULL,
+    lname TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Employee (
     employee_id INTEGER PRIMARY KEY,
-    user_id INT UNIQUE NOT NULL REFERENCES User(user_id), -- REFERENCES table(primary key) syntax is a shortcut for FOREIGN KEY
-    store_id INT NOT NULL REFERENCES Store(store_id), -- Foreign Key
-    role TEXT NOT NULL
+    user_id INTEGER UNIQUE NOT NULL REFERENCES User(user_id),
+    store_id INTEGER NOT NULL REFERENCES Store(store_id)
 );
 
 CREATE TABLE IF NOT EXISTS Customer (
     customer_id INTEGER PRIMARY KEY,
-    user_id INT UNIQUE NOT NULL REFERENCES User(user_id), -- Foreign Key
-    fname TEXT NOT NULL,
-    lname TEXT NOT NULL,
+    user_id INTEGER UNIQUE NOT NULL REFERENCES User(user_id),
     phone_number TEXT
 );
 
