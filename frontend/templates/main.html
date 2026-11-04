@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Home</title>
   <style>
+    body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 0 auto; padding: 0 1em 2em; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; }
     .tabs { border-bottom: 1px solid #999; margin: 1em 0; }
     .tabs button {
       border: 1px solid #999; border-bottom: none; background: #eee;
@@ -12,45 +14,349 @@
     }
     .tabs button[aria-selected="true"] { background: #fff; font-weight: bold; }
     .panel[hidden] { display: none; }
+    .badge { background: #c0392b; color: #fff; border-radius: 10px; padding: 0 .5em; font-size: .8em; margin-left: .3em; }
+    .badge[hidden] { display: none; }
+
+    .filters { display: flex; gap: .5em; margin-bottom: 1em; flex-wrap: wrap; }
+    .filters input, .filters select { padding: .4em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1em; }
+    .card { border: 1px solid #ccc; border-radius: 6px; padding: .8em; display: flex; flex-direction: column; gap: .3em; }
+    .card h3 { margin: 0; font-size: 1.05em; }
+    .cat { color: #666; font-size: .85em; }
+    .price { font-weight: bold; font-size: 1.1em; }
+    .stock-ok { color: #1e7e34; } .stock-low { color: #b9770e; } .stock-out { color: #c0392b; }
+    .card .actions { margin-top: auto; display: flex; gap: .4em; }
+    button.primary { background: #2c5fd6; color: #fff; border: none; border-radius: 4px; padding: .45em .8em; cursor: pointer; }
+    button.primary:disabled { background: #999; cursor: not-allowed; }
+    button.secondary { background: #fff; border: 1px solid #999; border-radius: 4px; padding: .45em .8em; cursor: pointer; }
+
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: .5em; border-bottom: 1px solid #ddd; }
+    td.num, th.num { text-align: right; }
+    .qty { display: inline-flex; align-items: center; gap: .3em; }
+    .qty input { width: 3.5em; text-align: center; padding: .25em; }
+    .total-row { font-weight: bold; font-size: 1.1em; }
+    .cart-actions { margin-top: 1em; display: flex; gap: .5em; justify-content: flex-end; }
+
+    dialog { border: 1px solid #999; border-radius: 8px; padding: 1.2em; max-width: 420px; width: 90%; }
+    dialog::backdrop { background: rgba(0,0,0,.4); }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: .3em 1em; }
+    dt { color: #666; } dd { margin: 0; }
+
+    .toast { position: fixed; bottom: 1em; right: 1em; background: #222; color: #fff; padding: .7em 1em; border-radius: 6px; }
+    .toast[hidden] { display: none; }
+    .toast.error { background: #c0392b; }
+    .order { border: 1px solid #ccc; border-radius: 6px; padding: .8em; margin-bottom: 1em; }
+    .order h3 { margin: 0 0 .4em; font-size: 1em; }
   </style>
 </head>
-<body>
-  <h1>Welcome</h1>
-  <p><a href="{{ url_for('logout') }}">Sign out</a></p>
+<body data-user="{{ user }}">
+  <div class="topbar">
+    <h1>Welcome, {{ user }}</h1>
+    <a href="{{ url_for('logout') }}">Sign out</a>
+  </div>
 
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-browse" aria-controls="panel-browse" aria-selected="true">Browse</button>
+    <button role="tab" id="tab-cart" aria-controls="panel-cart" aria-selected="false">Cart <span class="badge" id="cart-badge" hidden>0</span></button>
     <button role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false">Purchase History</button>
     <button role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false">Settings</button>
   </div>
 
+  <!-- BROWSE -->
   <section class="panel" id="panel-browse" role="tabpanel" aria-labelledby="tab-browse">
-    <h2>Browse</h2>
-    <p>Nothing here yet.</p>
+    <h2>Browse Parts</h2>
+    <div class="filters">
+      <input id="search" type="search" placeholder="Search parts..." aria-label="Search parts">
+      <select id="category" aria-label="Category"><option value="">All categories</option></select>
+    </div>
+    <div class="grid" id="parts-grid"></div>
+    <p id="parts-empty" hidden>No parts match your search.</p>
   </section>
 
+  <!-- CART -->
+  <section class="panel" id="panel-cart" role="tabpanel" aria-labelledby="tab-cart" hidden>
+    <h2>Shopping Cart</h2>
+    <p id="cart-empty">Your cart is empty. Add parts from the Browse tab.</p>
+    <table id="cart-table" hidden>
+      <thead><tr><th>Part</th><th class="num">Price</th><th>Quantity</th><th class="num">Subtotal</th><th></th></tr></thead>
+      <tbody id="cart-body"></tbody>
+      <tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="cart-total"></td><td></td></tr></tfoot>
+    </table>
+    <div class="cart-actions" id="cart-actions" hidden>
+      <button class="secondary" id="clear-cart">Clear cart</button>
+      <button class="primary" id="checkout">Place order</button>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
   <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
     <h2>Purchase History</h2>
-    <p>Nothing here yet.</p>
+    <div id="orders"></div>
   </section>
 
   <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
     <h2>Settings</h2>
-    <p>Nothing here yet.</p>
+    <p>
+      Cart, orders and stock changes are saved in this browser only.
+      <button class="secondary" id="reset-demo">Reset demo data</button>
+    </p>
   </section>
 
-  <script>
-    const tabs = document.querySelectorAll('[role="tab"]');
+  <!-- PART DETAILS -->
+  <dialog id="part-dialog">
+    <h2 id="d-name"></h2>
+    <p id="d-desc"></p>
+    <dl>
+      <dt>Part #</dt><dd id="d-id"></dd>
+      <dt>Category</dt><dd id="d-cat"></dd>
+      <dt>Price</dt><dd id="d-price"></dd>
+      <dt>Availability</dt><dd id="d-stock"></dd>
+    </dl>
+    <p>
+      <label>Quantity
+        <input id="d-qty" type="number" min="1" value="1" style="width:4em">
+      </label>
+    </p>
+    <div class="cart-actions">
+      <button class="secondary" id="d-close">Close</button>
+      <button class="primary" id="d-add">Add to cart</button>
+    </div>
+  </dialog>
 
+  <div class="toast" id="toast" hidden></div>
+
+  <script>
+  
+    // This for test !!!
+    // PARTS CATALOG (front-end only).
+    // from test_data.sql.
+    const PARTS = [
+      { id: 1, name: 'Oil Filter',          category: 'Filters',    price: 12.99,  stock: 25, description: 'Engine oil filter' },
+      { id: 2, name: 'Brake Pads',          category: 'Brakes',     price: 49.99,  stock: 15, description: 'Front ceramic brake pads' },
+    ];
+
+    const $ = id => document.getElementById(id);
+    const money = n => '$' + Number(n).toFixed(2);
+
+    // Saved state
+    const KEY = 'autoparts_' + document.body.dataset.user;
+    function load(name, fallback) {
+      try { const v = localStorage.getItem(KEY + '_' + name); return v ? JSON.parse(v) : fallback; }
+      catch (e) { return fallback; }
+    }
+    function save(name, value) {
+      try { localStorage.setItem(KEY + '_' + name, JSON.stringify(value)); } catch (e) {}
+    }
+    let cart   = load('cart', {});      // { partId: quantity }
+    let orders = load('orders', []);
+    let stock  = load('stock', {});     // { partId: remaining } overrides PARTS[].stock
+    const partById = id => PARTS.find(p => p.id === id);
+    const stockOf  = p => (p.id in stock ? stock[p.id] : p.stock);
+    let detailPart = null;
+
+    // Safe DOM builder 
+    function el(tag, props = {}, ...children) {
+      const node = document.createElement(tag);
+      Object.entries(props).forEach(([k, v]) => k === 'class' ? node.className = v : node[k] = v);
+      children.forEach(c => node.append(c));
+      return node;
+    }
+
+    let toastTimer;
+    function toast(msg, isError = false) {
+      const t = $('toast');
+      t.textContent = msg; t.className = 'toast' + (isError ? ' error' : ''); t.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.hidden = true, 2800);
+    }
+
+    // Tabs
+    const tabs = document.querySelectorAll('[role="tab"]');
+    
     function showTab(tab) {
       tabs.forEach(t => {
         const selected = t === tab;
         t.setAttribute('aria-selected', selected);
-        document.getElementById(t.getAttribute('aria-controls')).hidden = !selected;
+        $(t.getAttribute('aria-controls')).hidden = !selected;
       });
+      if (tab.id === 'tab-cart') renderCart();
+      if (tab.id === 'tab-history') renderOrders();
     }
 
     tabs.forEach(t => t.addEventListener('click', () => showTab(t)));
+
+    // Browse
+    function stockLabel(n) {
+      if (n <= 0) return el('span', { class: 'stock-out', textContent: 'Out of stock' });
+      if (n <= 10) return el('span', { class: 'stock-low', textContent: 'Only ' + n + ' left' });
+      return el('span', { class: 'stock-ok', textContent: 'In stock' });
+    }
+
+    function renderParts() {
+      const q = $('search').value.trim().toLowerCase();
+      const cat = $('category').value;
+      const list = PARTS.filter(p =>
+        (!cat || p.category === cat) &&
+        (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)));
+
+      const grid = $('parts-grid');
+      grid.replaceChildren();
+      $('parts-empty').hidden = list.length > 0;
+      list.forEach(p => {
+        const add = el('button', { class: 'primary', textContent: 'Add to cart', disabled: stockOf(p) <= 0 });
+        add.addEventListener('click', () => addToCart(p.id, 1));
+        const details = el('button', { class: 'secondary', textContent: 'Details' });
+        details.addEventListener('click', () => openDetails(p.id));
+        grid.append(el('div', { class: 'card' },
+          el('h3', { textContent: p.name }),
+          el('span', { class: 'cat', textContent: p.category }),
+          el('span', { class: 'price', textContent: money(p.price) }),
+          stockLabel(stockOf(p)),
+          el('div', { class: 'actions' }, details, add)));
+      });
+    }
+
+    [...new Set(PARTS.map(p => p.category))].sort().forEach(c =>
+      $('category').append(el('option', { value: c, textContent: c })));
+    $('search').addEventListener('input', renderParts);
+    $('category').addEventListener('change', renderParts);
+
+    // Part details
+    function openDetails(id) {
+      const p = partById(id), n = stockOf(p);
+      detailPart = p;
+      $('d-name').textContent = p.name;
+      $('d-desc').textContent = p.description || 'No description available.';
+      $('d-id').textContent = p.id;
+      $('d-cat').textContent = p.category;
+      $('d-price').textContent = money(p.price);
+      $('d-stock').textContent = n > 0 ? n + ' in stock' : 'Out of stock';
+      $('d-qty').value = 1; $('d-qty').max = n;
+      $('d-add').disabled = n <= 0;
+      $('part-dialog').showModal();
+    }
+    $('d-close').addEventListener('click', () => $('part-dialog').close());
+    $('d-add').addEventListener('click', () => {
+      const qty = Math.max(1, parseInt($('d-qty').value) || 1);
+      if (addToCart(detailPart.id, qty)) $('part-dialog').close();
+    });
+
+    // Cart
+    function setQty(id, qty) {
+      const p = partById(id), max = stockOf(p);
+      if (qty <= 0) { delete cart[id]; }
+      else {
+        if (qty > max) { qty = max; toast('Only ' + max + ' in stock - quantity adjusted.', true); }
+        if (qty <= 0) { delete cart[id]; } else { cart[id] = qty; }
+      }
+      save('cart', cart);
+      renderCart();
+    }
+
+    function addToCart(id, qty) {
+      const p = partById(id);
+      if (stockOf(p) <= 0) { toast(p.name + ' is out of stock.', true); return false; }
+      setQty(id, (cart[id] || 0) + qty);
+      toast('Added ' + p.name + ' to cart');
+      return true;
+    }
+
+    function cartTotals() {
+      let total = 0, count = 0;
+      Object.entries(cart).forEach(([id, qty]) => { total += partById(+id).price * qty; count += qty; });
+      return { total, count };
+    }
+
+    function renderCart() {
+      const { total, count } = cartTotals();
+      $('cart-badge').textContent = count; $('cart-badge').hidden = count === 0;
+      const empty = count === 0;
+      $('cart-empty').hidden = !empty; $('cart-table').hidden = empty; $('cart-actions').hidden = empty;
+
+      const body = $('cart-body');
+      body.replaceChildren();
+      Object.entries(cart).forEach(([sid, qty]) => {
+        const p = partById(+sid);
+        const minus = el('button', { class: 'secondary', textContent: '-', ariaLabel: 'Decrease quantity' });
+        const plus  = el('button', { class: 'secondary', textContent: '+', ariaLabel: 'Increase quantity' });
+        const input = el('input', { type: 'number', min: 1, max: stockOf(p), value: qty });
+        const remove = el('button', { class: 'secondary', textContent: 'Remove' });
+        minus.addEventListener('click', () => setQty(p.id, qty - 1));
+        plus.addEventListener('click', () => setQty(p.id, qty + 1));
+        input.addEventListener('change', () => setQty(p.id, parseInt(input.value) || 0));
+        remove.addEventListener('click', () => setQty(p.id, 0));
+        body.append(el('tr', {},
+          el('td', {}, el('strong', { textContent: p.name }), el('br'), el('span', { class: 'cat', textContent: p.category })),
+          el('td', { class: 'num', textContent: money(p.price) }),
+          el('td', {}, el('span', { class: 'qty' }, minus, input, plus)),
+          el('td', { class: 'num', textContent: money(p.price * qty) }),
+          el('td', {}, remove)));
+      });
+      $('cart-total').textContent = money(total);
+    }
+
+    $('clear-cart').addEventListener('click', () => { cart = {}; save('cart', cart); renderCart(); });
+
+    $('checkout').addEventListener('click', () => {
+      const { total } = cartTotals();
+      if (!confirm('Place order for ' + money(total) + '?')) return;
+
+      // re-check stock, then build the order
+      for (const [sid, qty] of Object.entries(cart)) {
+        const p = partById(+sid);
+        if (stockOf(p) < qty) { toast('Not enough stock for ' + p.name + ' (only ' + stockOf(p) + ' left).', true); renderCart(); return; }
+      }
+      const items = Object.entries(cart).map(([sid, qty]) => {
+        const p = partById(+sid);
+        stock[p.id] = stockOf(p) - qty;
+        return { name: p.name, quantity: qty, unit_price: p.price };
+      });
+      const order = {
+        order_id: orders.length ? Math.max(...orders.map(o => o.order_id)) + 1 : 1,
+        order_date: new Date().toISOString().slice(0, 10),
+        status: 'Pending', items, total
+      };
+      orders.unshift(order);
+      cart = {};
+      save('orders', orders); save('stock', stock); save('cart', cart);
+      toast('Order #' + order.order_id + ' placed!');
+      renderParts();
+      showTab($('tab-history'));
+    });
+
+    // Purchase history
+    function renderOrders() {
+      const box = $('orders');
+      box.replaceChildren();
+      if (!orders.length) { box.append(el('p', { textContent: 'No orders yet.' })); return; }
+      orders.forEach(o => {
+        const rows = o.items.map(i => el('tr', {},
+          el('td', { textContent: i.name }),
+          el('td', { class: 'num', textContent: i.quantity }),
+          el('td', { class: 'num', textContent: money(i.unit_price) }),
+          el('td', { class: 'num', textContent: money(i.quantity * i.unit_price) })));
+        box.append(el('div', { class: 'order' },
+          el('h3', { textContent: 'Order #' + o.order_id + ' - ' + o.order_date + ' - ' + o.status + ' - ' + money(o.total) }),
+          el('table', {},
+            el('thead', {}, el('tr', {}, el('th', { textContent: 'Part' }), el('th', { class: 'num', textContent: 'Qty' }),
+              el('th', { class: 'num', textContent: 'Unit' }), el('th', { class: 'num', textContent: 'Subtotal' }))),
+            el('tbody', {}, ...rows))));
+      });
+    }
+
+    // Settings
+    $('reset-demo').addEventListener('click', () => {
+      if (!confirm('Clear cart, orders and stock changes?')) return; // Temporay 
+      cart = {}; orders = []; stock = {};
+      save('cart', cart); save('orders', orders); save('stock', stock);
+      renderParts(); renderCart(); renderOrders();
+      toast('Demo data reset.');
+    });
+
+    renderParts();
+    renderCart();
+    renderOrders();
   </script>
 </body>
 </html>
