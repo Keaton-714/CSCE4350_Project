@@ -1,7 +1,7 @@
 -- Auto Parts System
 -- Sample data for databse testing 
 
-PRAGMA foriegn_keys = ON; -- Enforces foreign key relationships, preventing records from referencing nonexistent parent records.
+PRAGMA foreign_keys = ON; -- Enforces foreign key relationships, preventing records from referencing nonexistent parent records.
 
 -- Temporary Information for testing -- 
 
@@ -20,22 +20,22 @@ VALUES (1, '123 Main Street', 'Fort Worth', 'TX', '76102', 8175550001);
 
 -- User Info -- 
 
-INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
-VALUES (1, 'JohnDoe@yahoo.com', 'demo_hash_customer_001', 'John', 'Doe');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname, phone_number)
+VALUES (1, 'JohnDoe@yahoo.com', 'demo_hash_customer_001', 'John', 'Doe', '8175551000');
 
-INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
-VALUES (2, 'JaneDoe@yahoo.com', 'demo_hash_customer_002', 'Jane', 'Doe');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname, phone_number)
+VALUES (2, 'JaneDoe@yahoo.com', 'demo_hash_customer_002', 'Jane', 'Doe', '8175551001');
 
-INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname)
-VALUES (3, 'manager@test.com', 'demo_hash_employee_003', 'Test', 'Manager');
+INSERT OR IGNORE INTO User (user_id, email, password_hash, fname, lname, phone_number)
+VALUES (3, 'manager@test.com', 'demo_hash_employee_003', 'Test', 'Manager', '8175551002');
 
 -- Customer Info -- 
 
-INSERT OR IGNORE INTO Customer (customer_id, user_id, phone_number) -- user_id = 1 matches so it connects to User.user_id = 1 information
-VALUES (1, 1, '8175551000');
+INSERT OR IGNORE INTO Customer (customer_id, user_id)
+VALUES (1, 1);
 
-INSERT OR IGNORE INTO Customer (customer_id, user_id, phone_number) -- user_id = 2 matches so it connects to User.user_id = 2 information
-VALUES (2, 2, '8175551001');
+INSERT OR IGNORE INTO Customer (customer_id, user_id)
+VALUES (2, 2);
 
 -- Employee Info -- 
 

@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS User (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     fname TEXT NOT NULL,
-    lname TEXT NOT NULL
+    lname TEXT NOT NULL,
+    phone_number TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Employee (
@@ -46,8 +47,7 @@ CREATE TABLE IF NOT EXISTS Employee (
 
 CREATE TABLE IF NOT EXISTS Customer (
     customer_id INTEGER PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES User(user_id),
-    phone_number TEXT
+    user_id INTEGER UNIQUE NOT NULL REFERENCES User(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS StoreInventory (

@@ -12,6 +12,57 @@ class Authentication:
     
     def verify_password(self, password: str, password_hash: str) -> bool:
         return check_password_hash(password_hash, password)
+
+    def register_customer(self, email, password, fname, lname, phone_number):
+        connection = get_connection()
+
+        try:
+            # Check whether the email already exists
+            existing_user = connection.execute(
+                """
+                SELECT user_id
+                FROM User
+                WHERE email = ?
+                """,
+                (email,)
+            ).fetchone()
+
+            if existing_user is not None:
+                return False
+
+            # Hash the password
+            password_hash = self.hash_password(password)
+
+            # Insert the new user
+            cursor = connection.execute(
+                """
+                INSERT INTO User (email, password_hash, fname, lname, phone_number)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (email, password_hash, fname, lname, phone_number)
+            )
+
+            # Retrieve the generated user ID
+            user_id = cursor.lastrowid
+
+            # Insert the customer record
+            connection.execute(
+                """
+                INSERT INTO Customer (user_id)
+                VALUES (?)
+                """,
+                (user_id,)
+            )
+
+            connection.commit()
+            return True
+
+        except Exception:
+            connection.rollback()
+            raise
+
+        finally:
+            connection.close()
     
     def login(self, email: str, password: str) -> bool:
 
@@ -47,7 +98,6 @@ class Authentication:
         session["user_id"] = user["user_id"]
         return True
     
-        pass
     
     def logout(self):
         # TODO: Clear the authenticated session

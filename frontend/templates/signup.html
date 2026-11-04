@@ -7,29 +7,50 @@
 </head>
 <body>
   <h1>Sign up</h1>
+
   {% if errors %}
     <ul style="color:red">
-      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      {% for e in errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
     </ul>
   {% endif %}
-  <form method="post">
+
+  <form action="{{ url_for('auth.signup') }}" method="post">
     <h2>Account</h2>
-    <p><label>Username <input name="username" value="{{ form.username }}" required autofocus></label></p>
-    <p><label>Password <input name="password" type="password" minlength="8" required></label></p>
-    <p><label>Confirm password <input name="confirm_password" type="password" minlength="8" required></label></p>
+
+    <p><label>Email
+      <input name="email" type="email"
+             value="{{ form.email }}" required autofocus>
+    </label></p>
+
+    <p><label>Password
+      <input name="password" type="password" minlength="8" required>
+    </label></p>
+
+    <p><label>Confirm password
+      <input name="confirm_password" type="password" minlength="8" required>
+    </label></p>
 
     <h2>Personal information</h2>
-    <p><label>First name <input name="first_name" value="{{ form.first_name }}" required></label></p>
-    <p><label>Last name <input name="last_name" value="{{ form.last_name }}" required></label></p>
-    <p><label>Street address <input name="street_address" value="{{ form.street_address }}" required></label></p>
-    <p><label>City <input name="city" value="{{ form.city }}" required></label></p>
-    <p><label>State <input name="state" value="{{ form.state }}" maxlength="2" size="2" required></label></p>
-    <p><label>ZIP <input name="zip" value="{{ form.zip }}" pattern="\d{5}" maxlength="5" size="5" required></label></p>
-    <p><label>Phone <input name="phone" type="tel" value="{{ form.phone }}" required></label></p>
-    <p><label>E-mail <input name="email" type="email" value="{{ form.email }}" required></label></p>
+
+    <p><label>First name
+      <input name="first_name" value="{{ form.first_name }}" required>
+    </label></p>
+
+    <p><label>Last name
+      <input name="last_name" value="{{ form.last_name }}" required>
+    </label></p>
+
+    <p><label>Phone
+      <input name="phone" type="tel" value="{{ form.phone }}" required>
+    </label></p>
 
     <button type="submit">Create account</button>
   </form>
-  <p>Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+
+  <p>Already have an account?
+    <a href="{{ url_for('auth.login') }}">Sign in</a>
+  </p>
 </body>
 </html>

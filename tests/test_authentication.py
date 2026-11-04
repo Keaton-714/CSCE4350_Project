@@ -1,4 +1,4 @@
-from backend.routes.authentication import Authentication
+from backend.models.authentication import Authentication
 from flask import session 
 from backend.app import app 
 import backend.database.connection as db_connection
