@@ -69,6 +69,12 @@
   <section class="panel" id="panel-browse" role="tabpanel" aria-labelledby="tab-browse">
     <h2>Browse Parts</h2>
     <div class="filters">
+      <label for="store-select">Select Store:</label>
+      <select id="store-select">
+          <option value="">Choose a store</option>
+      </select>
+    </div>
+    <div class="filters">
       <input id="search" type="search" placeholder="Search parts..." aria-label="Search parts">
       <select id="category" aria-label="Category"><option value="">All categories</option></select>
     </div>
@@ -133,13 +139,69 @@
     // This for test !!!
     // PARTS CATALOG (front-end only).
     // from test_data.sql.
-    const PARTS = [
-      { id: 1, name: 'Oil Filter',          category: 'Filters',    price: 12.99,  stock: 25, description: 'Engine oil filter' },
-      { id: 2, name: 'Brake Pads',          category: 'Brakes',     price: 49.99,  stock: 15, description: 'Front ceramic brake pads' },
-    ];
+    let PARTS = [];
 
     const $ = id => document.getElementById(id);
     const money = n => '$' + Number(n).toFixed(2);
+
+    async function loadStores() {
+      const response = await fetch('/api/stores');
+      const stores = await response.json();
+
+      const select = $('store-select');
+
+      stores.forEach(store => {
+          const option = new Option(
+              `${store.city}, ${store.state}`,
+              store.store_id
+            );
+
+          select.add(option);
+      });
+    }
+    
+    async function loadParts(storeId) {
+      const response = await fetch(`/api/stores/${storeId}/inventory`);
+
+      const inventory = await response.json();
+
+      PARTS = inventory.map(part => ({
+          id: part.part_id,
+          name: part.name,
+          description: part.description,
+          price: part.price,
+          category: part.category,
+          stock: part.stock_quantity
+      }));
+
+      // Refresh categories
+      const category = $('category');
+      category.replaceChildren(new Option('All categories', ''));
+
+      [...new Set(PARTS.map(p => p.category))].sort().forEach(c => {
+          category.add(new Option(c, c));
+      });
+
+      renderParts();
+      renderCart();
+    }
+
+    $('store-select').addEventListener('change', function() {
+        const storeId = this.value;
+
+        // Clear the temporary cart when changing stores
+        cart = {};
+        save('cart', cart);
+
+        if (storeId) {
+          loadParts(storeId);
+        } else {
+            PARTS = [];
+            $('category').replaceChildren(new Option('All categories', ''));
+            renderParts();
+            renderCart();
+        }
+    });
 
     // Saved state
     const KEY = 'autoparts_' + document.body.dataset.user;
@@ -219,8 +281,8 @@
       });
     }
 
-    [...new Set(PARTS.map(p => p.category))].sort().forEach(c =>
-      $('category').append(el('option', { value: c, textContent: c })));
+    //[...new Set(PARTS.map(p => p.category))].sort().forEach(c =>
+    //  $('category').append(el('option', { value: c, textContent: c })));
     $('search').addEventListener('input', renderParts);
     $('category').addEventListener('change', renderParts);
 
@@ -356,8 +418,10 @@
       toast('Demo data reset.');
     });
 
-    renderParts();
-    renderCart();
+    //renderParts();
+    //renderCart();
+    //renderOrders();
+    loadStores();
     renderOrders();
   </script>
 </body>

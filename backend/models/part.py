@@ -6,3 +6,11 @@ class Part:
         self.price = price
         self.category = category
 
+    def to_dict(self):
+        return {
+            "part_id": self.part_id,
+            "name": self.name,
+            "description": self.description,
+            "price": self.price,
+            "category": self.category
+        }
