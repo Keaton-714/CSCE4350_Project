@@ -1,3 +1,8 @@
 To run you need to pip install -r requirements.txt (need to do only once)
-Then in the terminal write python backend/app.py
+
+if you haven't Intialzied datebase then run 
+python -m backend.database.init_db 
+
+When datebase is Intialzied -
+Then in the terminal write python -m backend.py
 click URL and you'll be in the website
