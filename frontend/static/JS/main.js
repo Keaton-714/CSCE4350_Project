@@ -91,10 +91,14 @@
   tabs.forEach(t => t.addEventListener('click', () => showTab(t)));
 
   // Browse
-  function stockLabel(n) {
+  const remaining = p => Math.max(0, p.stock - (cart[p.id] || 0));
+
+  // checks the stock and gives live updated to user
+  function stockLabel(n, inCart = 0) {
+    if (n <= 0 && inCart > 0) return el('span', { class: 'stock-out', textContent: 'None left'});
     if (n <= 0) return el('span', { class: 'stock-out', textContent: 'Out of stock' });
-    if (n <= 10) return el('span', { class: 'stock-low', textContent: 'Only ' + n + ' left' });
-    return el('span', { class: 'stock-ok', textContent: 'In stock' });
+    if (n <= 10) return el('span', { class: 'stock-low', textContent: 'Only ' + n + ' left in stock' });
+    return el('span', { class: 'stock-ok', textContent: n + ' in stock' });
   }
 
   function renderParts() {
@@ -108,7 +112,13 @@
     grid.replaceChildren();
     $('parts-empty').hidden = list.length > 0;
     list.forEach(p => {
-      const add = el('button', { class: 'primary', textContent: 'Add to cart', disabled: p.stock <= 0 });
+      const inCart = cart[p.id] || 0;
+      const maxedOut = p.stock > 0 && inCart >= p.stock;
+      const add = el('button', {
+        class: 'primary',
+        textContent: maxedOut ? 'Max in cart' : 'Add to cart',
+        disabled: p.stock <= 0 || maxedOut
+      });
       add.addEventListener('click', () => addToCart(p.id, 1));
       const details = el('button', { class: 'secondary', textContent: 'Details' });
       details.addEventListener('click', () => openDetails(p.id));
@@ -116,7 +126,7 @@
         el('h3', { textContent: p.name }),
         el('span', { class: 'cat', textContent: p.category }),
         el('span', { class: 'price', textContent: money(p.price) }),
-        stockLabel(p.stock),
+        stockLabel(remaining(p), cart[p.id] || 0),
         el('div', { class: 'actions' }, details, add)));
     });
   }
@@ -145,14 +155,26 @@
     $('d-id').textContent = p.id;
     $('d-cat').textContent = p.category;
     $('d-price').textContent = money(p.price);
-    $('d-stock').textContent = p.stock > 0 ? p.stock + ' in stock' : 'Out of stock';
-    $('d-qty').value = 1;
-    $('d-qty').max = p.stock;
-    $('d-add').disabled = p.stock <= 0;
+    const inCart = cart[p.id] || 0;
+    const available = Math.max(0, p.stock - inCart);
+    $('d-stock').textContent = p.stock <= 0 ? 'Out of stock'
+      : available + ' available' + (inCart ? ' (' + inCart + ' already in your cart)' : '');
+    $('d-qty').value = available > 0 ? 1 : 0;
+    $('d-qty').min = available > 0 ? 1 : 0;
+    $('d-qty').max = available;
+    $('d-qty').disabled = available <= 0;
+    $('d-add').disabled = available <= 0;
     $('part-dialog').showModal();
   }
 
+  // change number of stock 
   $('d-close').addEventListener('click', () => $('part-dialog').close());
+  $('d-qty').addEventListener('change', () => {
+    const max = parseInt($('d-qty').max) || 0;
+    let q = parseInt($('d-qty').value) || 1;
+    if (q > max) { q = max; toast('Only ' + max + ' available to add.', true); }
+    $('d-qty').value = Math.max(q, max > 0 ? 1 : 0);
+  });
   $('d-add').addEventListener('click', () => {
     const qty = Math.max(1, parseInt($('d-qty').value) || 1);
     if (addToCart(detailPart.id, qty)) $('part-dialog').close();
@@ -164,12 +186,22 @@
     if (qty > p.stock) { qty = p.stock; toast('Only ' + p.stock + ' in stock - quantity adjusted.', true); }
     if (qty <= 0) { delete cart[id]; } else { cart[id] = qty; }
     renderCart();
+    renderParts();
   }
 
   function addToCart(id, qty) {
     const p = partById(id);
     if (p.stock <= 0) { toast(p.name + ' is out of stock.', true); return false; }
-    setQty(id, (cart[id] || 0) + qty);
+    const inCart = cart[id] || 0;
+    if (inCart >= p.stock) {
+      toast('You already have all ' + p.stock + ' in stock in your cart.', true);
+      return false;
+    }
+    if (inCart + qty > p.stock) {
+      toast('Only ' + p.stock + ' in stock (' + inCart + ' already in your cart).', true);
+      return false;
+    }
+    setQty(id, inCart + qty);
     toast('Added ' + p.name + ' to cart');
     return true;
   }
@@ -194,7 +226,7 @@
     Object.entries(cart).forEach(([sid, qty]) => {
       const p = partById(+sid);
       const minus = el('button', { class: 'secondary', textContent: '-', ariaLabel: 'Decrease quantity' });
-      const plus = el('button', { class: 'secondary', textContent: '+', ariaLabel: 'Increase quantity' });
+      const plus = el('button', { class: 'secondary', textContent: '+', ariaLabel: 'Increase quantity', disabled: qty >= p.stock });
       const input = el('input', { type: 'number', min: 1, max: p.stock, value: qty });
       const remove = el('button', { class: 'secondary', textContent: 'Remove' });
       minus.addEventListener('click', () => setQty(p.id, qty - 1));
@@ -202,7 +234,7 @@
       input.addEventListener('change', () => setQty(p.id, parseInt(input.value) || 0));
       remove.addEventListener('click', () => setQty(p.id, 0));
       body.append(el('tr', {},
-        el('td', {}, el('strong', { textContent: p.name }), el('br'), el('span', { class: 'cat', textContent: p.category })),
+        el('td', {}, el('strong', { textContent: p.name }), el('br'), el('span', { class: 'cat', textContent: p.category }), el('br'), el('span', { class: 'cat', textContent: remaining(p) + ' more available (' + p.stock + ' in stock)' })),
         el('td', { class: 'num', textContent: money(p.price) }),
         el('td', {}, el('span', { class: 'qty' }, minus, input, plus)),
         el('td', { class: 'num', textContent: money(p.price * qty) }),
