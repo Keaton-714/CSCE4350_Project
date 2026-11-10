@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, render_template, url_for, flash
+from flask import Blueprint, request, redirect, render_template, url_for, flash, session
 from backend.models.authentication import Authentication
 import re
 auth_bp = Blueprint("auth", __name__)
@@ -14,6 +14,9 @@ def login():
         password = request.form.get("password", "")
 
         if authentication.login(email, password):
+            if session["account_type"] == "employee":
+                return redirect(url_for("main.employee_main"))
+
             return redirect(url_for("main.main"))
 
         error = "Incorrect email or password."

@@ -70,32 +70,78 @@ class Authentication:
         # Retrieve the matching record and close the database connection
         connection = get_connection()
 
+        # try:
+        #     cursor = connection.execute(
+            
+        #         """
+        #         SELECT user_id, email, password_hash
+        #         FROM User
+        #         WHERE email = ? 
+        #         """,
+        #         (email,)
+        #     )
+
+        #     user = cursor.fetchone()
+        # finally:
+        #     connection.close()
+        
+        # # Reject the login attemp if no matching user exists.
+        # if user is None:
+        #     return False
+
+        # # Verify the entered password against the stored password hash.
+        # # Reject the login attempt if the password is incorrect.
+        # if not self.verify_password(password, user["password_hash"]):
+        #     return False
+
+        # # Store the authenticated user's ID in the Flask session
+        # session["user_id"] = user["user_id"]
+        # return True
+        # START NEW LOGIN
         try:
             cursor = connection.execute(
-            
                 """
-                SELECT user_id, email, password_hash
+                SELECT
+                    User.user_id,
+                    User.email,
+                    User.password_hash,
+                    Customer.customer_id,
+                    Employee.employee_id
                 FROM User
-                WHERE email = ? 
+                LEFT JOIN Customer
+                    ON User.user_id = Customer.user_id
+                LEFT JOIN Employee
+                    ON User.user_id = Employee.user_id
+                WHERE User.email = ?
                 """,
                 (email,)
             )
 
             user = cursor.fetchone()
+
         finally:
             connection.close()
-        
-        # Reject the login attemp if no matching user exists.
+
         if user is None:
             return False
 
-        # Verify the entered password against the stored password hash.
-        # Reject the login attempt if the password is incorrect.
         if not self.verify_password(password, user["password_hash"]):
             return False
 
-        # Store the authenticated user's ID in the Flask session
+        # Determine account type
+        if user["employee_id"] is not None:
+            account_type = "employee"
+
+        elif user["customer_id"] is not None:
+            account_type = "customer"
+
+        else:
+            return False
+
+        # Store authenticated user information
         session["user_id"] = user["user_id"]
+        session["account_type"] = account_type
+
         return True
     
     

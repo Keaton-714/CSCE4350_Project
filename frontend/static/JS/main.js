@@ -261,7 +261,7 @@
     }
     const items = Object.entries(cart).map(([sid, qty]) => {
       const p = partById(+sid);
-      p.stock -= qty;
+      p.stock -= qty; // local 
       return { name: p.name, quantity: qty, unit_price: p.price };
     });
     const order = {
