@@ -1,11 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AutoOne Employee Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoOne Employee Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/employee.css') }}">
 </head>
 <body>
+  <div class="topbar">
     <h1>Employee Dashboard</h1>
-    <p>Welcome to the AutoOne employee portal!</p>
+    <form action="{{ url_for('auth.logout') }}" method="POST">
+      <button type="submit">Sign out</button>
+    </form>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-new" aria-controls="panel-new" aria-selected="true">Order Parts</button>
+    <button role="tab" id="tab-inventory" aria-controls="panel-inventory" aria-selected="false">Inventory</button>
+    <button role="tab" id="tab-orders" aria-controls="panel-orders" aria-selected="false">Orders</button>
+    <button role="tab" id="tab-returns" aria-controls="panel-returns" aria-selected="false">Returns</button>
+  </div>
+
+  <!-- NEW ORDER -->
+  <section class="panel" id="panel-new" role="tabpanel" aria-labelledby="tab-new">
+    <h2>Order Parts</h2>
+    <div class="filters">
+      <select id="new-part" aria-label="Part"><option value="">Choose a part</option></select>
+      <input id="new-qty" type="number" min="1" value="1" style="width:5em" aria-label="Quantity">
+      <button class="secondary" id="add-line">Add to order</button>
+      <button class="secondary" id="open-new-part">Part not listed? Add new part</button>
+    </div>
+
+    <p id="lines-empty">No parts added yet.</p>
+    <table id="lines-table" hidden>
+      <thead><tr><th>Part</th><th class="num">Unit cost</th><th>Quantity</th><th class="num">Subtotal</th><th></th></tr></thead>
+      <tbody id="lines-body"></tbody>
+      <tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="lines-total"></td><td></td></tr></tfoot>
+    </table>
+    <div class="cart-actions" id="lines-actions" hidden>
+      <button class="secondary" id="clear-lines">Clear</button>
+      <button class="primary" id="place-order">Place order</button>
+    </div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section class="panel" id="panel-inventory" role="tabpanel" aria-labelledby="tab-inventory" hidden>
+    <h2>Store Inventory</h2>
+    <p id="inv-empty" class="empty" hidden>No parts stocked at this store yet.</p>
+    <table id="inv-table" hidden>
+      <thead><tr><th>Part</th><th>Category</th><th class="num">In stock</th><th></th></tr></thead>
+      <tbody id="inv-body"></tbody>
+    </table>
+  </section>
+
+  <!-- ORDERS -->
+  <section class="panel" id="panel-orders" role="tabpanel" aria-labelledby="tab-orders" hidden>
+    <h2>Store Orders</h2>
+    <div id="orders"></div>
+  </section>
+
+  <!-- RETURNS -->
+  <section class="panel" id="panel-returns" role="tabpanel" aria-labelledby="tab-returns" hidden>
+    <h2>Return Parts</h2>
+    <div class="filters">
+      <select id="ret-part" aria-label="Part to return"><option value="">Choose a part in stock</option></select>
+      <input id="ret-qty" type="number" min="1" value="1" style="width:5em" aria-label="Quantity">
+      <input id="ret-reason" class="grow" placeholder="Reason (defective, wrong part...)" aria-label="Reason">
+      <button class="primary" id="submit-return">Return</button>
+    </div>
+    <h3>Return History</h3>
+    <div id="returns"></div>
+  </section>
+
+  <!-- NEW PART -->
+  <dialog id="new-part-dialog">
+    <h2>Add new part</h2>
+    <p><label>Name <input id="np-name"></label></p>
+    <p><label>Category <input id="np-cat"></label></p>
+    <p><label>Unit price <input id="np-price" type="number" min="0" step="0.01"></label></p>
+    <p><label>Description <input id="np-desc"></label></p>
+    <div class="cart-actions">
+      <button class="secondary" id="np-cancel">Cancel</button>
+      <button class="primary" id="np-save">Save part</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="{{ url_for('static', filename='JS/employee.js') }}" defer></script>
 </body>
 </html>

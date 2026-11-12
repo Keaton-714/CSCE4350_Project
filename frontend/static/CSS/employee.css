@@ -1,0 +1,21 @@
+/* Order status badges */
+.status { display: inline-block; padding: .1em .6em; border-radius: 10px; font-size: .8em; font-weight: bold; color: #fff; }
+.status-pending  { background: #b9770e; }
+.status-received { background: #1e7e34; }
+.status-stopped  { background: #7f8c8d; }
+
+/* Order card header: title on the left, badge on the right */
+.order-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; flex-wrap: wrap; margin-bottom: .4em; }
+.order-head h3 { margin: 0; }
+.order .note { color: #666; font-size: .85em; }
+
+/* Inventory table */
+.low-row td { background: #fdf2e0; }
+td.actions-cell { text-align: right; white-space: nowrap; }
+
+/* Order-building and return forms */
+.panel h3 { margin-top: 1.5em; }
+.filters .grow { flex: 1; min-width: 12em; }
+.empty { color: #666; font-style: italic; }
+button.danger { background: #fff; color: #c0392b; border: 1px solid #c0392b; border-radius: 4px; padding: .45em .8em; cursor: pointer; }
+button.danger:hover { background: #c0392b; color: #fff; }
