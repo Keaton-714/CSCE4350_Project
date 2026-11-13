@@ -74,5 +74,32 @@ CREATE TABLE IF NOT EXISTS OrderItem (
     unit_price REAL NOT NULL CHECK (unit_price >= 0)
 );
 
+CREATE TABLE IF NOT EXISTS PurchaseOrder (
+    po_id INTEGER PRIMARY KEY,
+    employee_id INTEGER NOT NULL REFERENCES Employee(employee_id),
+    store_id INTEGER NOT NULL REFERENCES Store(store_id),
+    order_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL DEFAULT 'Pending'
+        CHECK (status IN ('Pending', 'Received', 'Stopped')),
+    reordered_from INTEGER REFERENCES PurchaseOrder(po_id)
+);
+
+CREATE TABLE IF NOT EXISTS PurchaseOrderItem (
+    po_item_id INTEGER PRIMARY KEY,
+    po_id INTEGER NOT NULL REFERENCES PurchaseOrder(po_id),
+    part_id INTEGER NOT NULL REFERENCES Part(part_id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_cost REAL NOT NULL CHECK (unit_cost >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS ReturnRecord (
+    return_id INTEGER PRIMARY KEY,
+    employee_id INTEGER NOT NULL REFERENCES Employee(employee_id),
+    store_id INTEGER NOT NULL REFERENCES Store(store_id),
+    part_id INTEGER NOT NULL REFERENCES Part(part_id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    reason TEXT,
+    return_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 

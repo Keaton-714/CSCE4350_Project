@@ -29,19 +29,19 @@
   // Parts and stock always come from the backend. The cart lives in memory
   // (it is tied to the selected store). Orders are kept in localStorage until
   // the backend has an orders endpoint.
-  const ORDERS_KEY = 'autoparts_' + document.body.dataset.user + '_orders';
+  //const ORDERS_KEY = 'autoparts_' + document.body.dataset.user + '_orders';
 
-  function loadOrders() {
-    try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function saveOrders() {
-    try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); } catch (e) {}
-  }
+  // function loadOrders() {
+  //   try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; }
+  //   catch (e) { return []; }
+  // }
+  // function saveOrders() {
+  //   try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); } catch (e) {}
+  // }
 
   let parts = [];              // [{ id, name, description, price, category, stock }]
   let cart = {};               // { partId: quantity }
-  let orders = loadOrders();
+  let orders = [];
   let detailPart = null;
 
   const partById = id => parts.find(p => p.id === id);
@@ -69,10 +69,24 @@
 
     const category = $('category');
     category.replaceChildren(new Option('All categories', ''));
-    [...new Set(parts.map(p => p.category))].sort().forEach(c => category.add(new Option(c, c)));
+    [...new Set(parts.map(p => p.category))]
+      .sort()
+      .forEach(c => category.add(new Option(c, c)));
 
     renderParts();
     renderCart();
+  }
+
+  async function loadOrders() {
+    const response = await fetch('/api/orders');
+
+    if (!response.ok) {
+      toast('Failed to load purchase history.', true);
+      return;
+    }
+
+    orders = await response.json();
+    renderOrders();
   }
 
   // Tabs
@@ -85,7 +99,7 @@
       $(t.getAttribute('aria-controls')).hidden = !selected;
     });
     if (tab.id === 'tab-cart') renderCart();
-    if (tab.id === 'tab-history') renderOrders();
+    if (tab.id === 'tab-history') loadOrders();
   }
 
   tabs.forEach(t => t.addEventListener('click', () => showTab(t)));
@@ -246,35 +260,55 @@
   $('clear-cart').addEventListener('click', () => { cart = {}; renderCart(); });
 
   //  Checkout 
-  $('checkout').addEventListener('click', () => {
+  $('checkout').addEventListener('click', async () => {
     const { total } = cartTotals();
+    const storeId = $('store-select').value;
+
+    if (!storeId || !Object.keys(cart).length) {
+      toast('Select a store and add parts first.', true);
+      return;
+    }
+
     if (!confirm('Place order for ' + money(total) + '?')) return;
 
-    // re-check stock, then build the order
-    for (const [sid, qty] of Object.entries(cart)) {
-      const p = partById(+sid);
-      if (p.stock < qty) {
-        toast('Not enough stock for ' + p.name + ' (only ' + p.stock + ' left).', true);
-        renderCart();
-        return;
+    const items = Object.entries(cart).map(([id, quantity]) => ({
+      part_id: Number(id),
+      quantity
+    }));
+
+    $('checkout').disabled = true;
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          store_id: Number(storeId),
+          items
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Checkout failed');
       }
+
+      cart = {};
+
+      await loadParts(storeId);
+      await loadOrders();
+
+      toast('Order #' + result.order_id + ' placed!');
+      showTab($('tab-history'));
+
+    } catch (error) {
+      toast(error.message, true);
+      await loadParts(storeId);
+
+    } finally {
+      $('checkout').disabled = false;
     }
-    const items = Object.entries(cart).map(([sid, qty]) => {
-      const p = partById(+sid);
-      p.stock -= qty; // local 
-      return { name: p.name, quantity: qty, unit_price: p.price };
-    });
-    const order = {
-      order_id: orders.length ? Math.max(...orders.map(o => o.order_id)) + 1 : 1,
-      order_date: new Date().toISOString().slice(0, 10),
-      status: 'Pending', items, total
-    };
-    orders.unshift(order);
-    cart = {};
-    saveOrders();
-    toast('Order #' + order.order_id + ' placed!');
-    renderParts();
-    showTab($('tab-history'));
   });
 
   // Purchase history 
@@ -299,5 +333,5 @@
 
   // Init
   loadStores();
-  renderOrders();
+  loadOrders();
 })();

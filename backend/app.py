@@ -3,7 +3,9 @@ from flask import Flask
 from backend.routes.auth_routes import auth_bp 
 from backend.routes.main_routes import main_bp 
 from backend.routes.part_routes import part_bp
-from backend.routes.store_routes import store_bp 
+from backend.routes.store_routes import store_bp
+from backend.routes.employee_routes import employee_bp
+from backend.routes.order_routes import order_bp
 
 # This section of code is to find the frontend files (for now login and main)  
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
@@ -18,6 +20,8 @@ app.register_blueprint(auth_bp) # Needed to allow for the endpoint to exist in a
 app.register_blueprint(main_bp) # Needed to allow for the endpoint to exist in another module (outside of app.py)
 app.register_blueprint(part_bp)
 app.register_blueprint(store_bp)
+app.register_blueprint(employee_bp)
+app.register_blueprint(order_bp)
 
 if __name__ == "__main__":
     app.run(debug=True)

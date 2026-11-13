@@ -119,6 +119,4 @@ class Authentication:
     
     
     def logout(self):
-        # TODO: Clear the authenticated session
-        session.pop("user_id", None)
-        pass
+        session.clear()
