@@ -17,7 +17,7 @@ Run the following command to create the SQLite database and populate it with sam
 python -m backend.database.init_db
 ```
 This creates autoone.db in the backend/database/ directory.
-Note: Existing databases will not be reset by this command.
+**Note:** Existing databases will not be reset by this command.
 
 ### 3. Create an Employee Account
 
