@@ -21,12 +21,6 @@ VALUES (1, '123 Main Street', 'Fort Worth', 'TX', '76102', 8175550001);
 INSERT OR IGNORE INTO Store (store_id, street_address, city, state, zip, phone_number)
 VALUES (2, '123 Main Street', 'Denton', 'TX', '76201', '940-555-0102');
 
-INSERT OR IGNORE INTO StoreInventory (
-    store_id, part_id, stock_quantity
-)
-VALUES
-    (2, 1, 35),
-    (2, 2, 15);
 
 -- User Info -- 
 
